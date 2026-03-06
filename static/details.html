@@ -267,6 +267,13 @@
                             <span id="adr_completare" class="no-data">N/A</span>
                         </div>
                     </div>
+
+                    <div class="detail-card mfinante-section" style="grid-column: 1 / -1;">
+                        <h3><i class="fas fa-chart-bar"></i> Date Financiare 2024 (MFinante)</h3>
+                        <div id="mfinante-container">
+                            <span class="no-data">Nu există date financiare disponibile pentru acest an.</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -350,6 +357,32 @@
                 webElement.innerHTML = `<a href="${url}" target="_blank" class="web-link">${webValue} <i class="fas fa-external-link-alt"></i></a>`;
             } else {
                 webElement.innerHTML = '<span class="no-data">N/A</span>';
+            }
+
+            // Populate financial data if exists
+            const mfinanteContainer = document.getElementById('mfinante-container');
+            if (company.mfinante && Object.keys(company.mfinante).length > 0) {
+                mfinanteContainer.innerHTML = ''; // clear "no-data"
+                const gridDiv = document.createElement('div');
+                gridDiv.style.display = 'grid';
+                gridDiv.style.gridTemplateColumns = 'repeat(auto-fit, minmax(280px, 1fr))';
+                gridDiv.style.gap = '15px';
+                
+                for (const [label, value] of Object.entries(company.mfinante)) {
+                    let displayValue = value;
+                    if (value !== "" && !isNaN(value)) {
+                        displayValue = Number(value).toLocaleString('ro-RO');
+                    }
+                    if (value === "") displayValue = "-";
+                    
+                    gridDiv.innerHTML += `
+                        <div class="detail-item">
+                            <label>${label}</label>
+                            <span style="border-left-color: #28a745;">${displayValue}</span>
+                        </div>
+                    `;
+                }
+                mfinanteContainer.appendChild(gridDiv);
             }
 
             // Hide loading, show content
