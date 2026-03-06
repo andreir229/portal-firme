@@ -20,13 +20,23 @@ df_global['CUI'] = df_global['CUI'].str.strip()
 MFINANTE_SOURCES = [
     {
         "year": "2024",
-        "csv": os.path.join("src", "mfinante", "web_bl_bs_sl_an2024.csv"),
-        "txt": os.path.join("src", "mfinante", "web_bl_bs_sl_an2024.txt"),
+        "csv": os.path.join("src", "mfinante", "2024", "web_bl_bs_sl_an2024.csv"),
+        "txt": os.path.join("src", "mfinante", "2024", "web_bl_bs_sl_an2024.txt"),
     },
     {
         "year": "2024",  # same year, different report type (VS)
-        "csv": os.path.join("src", "mfinante", "web_vs_2024.csv"),
-        "txt": os.path.join("src", "mfinante", "web_vs_2024.txt"),
+        "csv": os.path.join("src", "mfinante", "2024", "web_vs_2024.csv"),
+        "txt": os.path.join("src", "mfinante", "2024", "web_vs_2024.txt"),
+    },
+    {
+        "year": "2023",
+        "csv": os.path.join("src", "mfinante", "2023", "web_bl_bs_sl_an2023.csv"),
+        "txt": os.path.join("src", "mfinante", "2023", "web_bl_bs_sl_an2023.txt"),
+    },
+    {
+        "year": "2023",
+        "csv": os.path.join("src", "mfinante", "2023", "web_vs_2023.csv"),
+        "txt": os.path.join("src", "mfinante", "2023", "web_vs_2023.txt"),
     },
 ]
 
