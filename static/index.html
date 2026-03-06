@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Firme</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/theme.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <h1>
+                    <div class="header-icon">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <span>Portal Firme</span>
+                </h1>
+                <p>Căutați informații despre companiile din România</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="search-section">
+            <h2>
+                <i class="fas fa-search"></i>
+                Căutare Companie
+            </h2>
+            <div class="search-container">
+                <input type="text" id="searchBox" placeholder="Introduceți denumirea companiei...">
+                <button onclick="search()">
+                    <i class="fas fa-magnifying-glass"></i>
+                    Caută
+                </button>
+            </div>
+        </div>
+
+        <div class="results-section">
+            <h2>
+                <i class="fas fa-list"></i>
+                Rezultate
+            </h2>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Se încarcă rezultatele...</p>
+            </div>
+            <div class="no-results" id="noResults">
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>Niciun rezultat găsit. Încercați o altă căutare.</p>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="resultsTable" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Denumire</th>
+                            <th>CUI</th>
+                            <th>Localitate</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Portal Firme - Informații oficiale despre companiile din România</p>
+    </footer>
+
+    <script>
+        async function search() {
+            const query = document.getElementById('searchBox').value.trim();
+            
+            if (!query) {
+                alert('Vă rugăm introduceți un termen de căutare.');
+                return;
+            }
+
+            const loading = document.getElementById('loading');
+            const table = document.getElementById('resultsTable');
+            const tbody = table.querySelector('tbody');
+            const noResults = document.getElementById('noResults');
+
+            loading.classList.add('active');
+            table.style.display = 'none';
+            noResults.classList.remove('show');
+
+            try {
+                const response = await fetch(`/search?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+
+                loading.classList.remove('active');
+                tbody.innerHTML = '';
+
+                if (data.length === 0) {
+                    noResults.classList.add('show');
+                    table.style.display = 'none';
+                } else {
+                    data.forEach(firma => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><strong>${firma.DENUMIRE}</strong></td>
+                            <td>${firma.CUI}</td>
+                            <td>${firma.ADR_LOCALITATE || 'N/A'}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                    table.style.display = 'table';
+                    noResults.classList.remove('show');
+                }
+            } catch (error) {
+                loading.classList.remove('active');
+                console.error('Error:', error);
+                noResults.classList.add('show');
+                alert('A apărut o eroare la căutare. Vă rugăm încercați din nou.');
+            }
+        }
+
+        document.getElementById('searchBox').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                search();
+            }
+        });
+    </script>
+</body>
+</html>
