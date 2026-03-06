@@ -102,11 +102,15 @@
                 } else {
                     data.forEach(firma => {
                         const row = document.createElement('tr');
+                        row.style.cursor = 'pointer';
                         row.innerHTML = `
-                            <td><strong>${firma.DENUMIRE}</strong></td>
+                            <td><strong><a href="/details?cui=${encodeURIComponent(firma.CUI)}" style="color: inherit; text-decoration: inherit;">${firma.DENUMIRE}</a></strong></td>
                             <td>${firma.CUI}</td>
                             <td>${firma.ADR_LOCALITATE || 'N/A'}</td>
                         `;
+                        row.addEventListener('click', () => {
+                            window.location.href = `/details?cui=${encodeURIComponent(firma.CUI)}`;
+                        });
                         tbody.appendChild(row);
                     });
                     table.style.display = 'table';
