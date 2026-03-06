@@ -151,6 +151,55 @@
             color: #999;
             font-style: italic;
         }
+
+        /* Financial Table */
+        .mfinante-table-wrapper {
+            overflow-x: auto;
+            margin-top: 10px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .mfinante-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88em;
+            white-space: nowrap;
+        }
+
+        .mfinante-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .mfinante-table td {
+            padding: 9px 14px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+        }
+
+        .mfinante-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .mfinante-table tr:hover td {
+            background-color: #f7f5ff;
+        }
+
+        .mfinante-table td.year-cell {
+            font-weight: 700;
+            color: #667eea;
+            min-width: 60px;
+        }
+
+        .mfinante-table td.num-cell {
+            text-align: right;
+            min-width: 120px;
+        }
     </style>
 </head>
 <body>
@@ -269,9 +318,9 @@
                     </div>
 
                     <div class="detail-card mfinante-section" style="grid-column: 1 / -1;">
-                        <h3><i class="fas fa-chart-bar"></i> Date Financiare 2024 (MFinante)</h3>
+                        <h3><i class="fas fa-chart-bar"></i> Date Financiare (MFinante)</h3>
                         <div id="mfinante-container">
-                            <span class="no-data">Nu există date financiare disponibile pentru acest an.</span>
+                            <span class="no-data">Nu există date financiare disponibile.</span>
                         </div>
                     </div>
                 </div>
@@ -359,30 +408,49 @@
                 webElement.innerHTML = '<span class="no-data">N/A</span>';
             }
 
-            // Populate financial data if exists
+            // Populate financial data as a table (year rows × label columns)
             const mfinanteContainer = document.getElementById('mfinante-container');
             if (company.mfinante && Object.keys(company.mfinante).length > 0) {
-                mfinanteContainer.innerHTML = ''; // clear "no-data"
-                const gridDiv = document.createElement('div');
-                gridDiv.style.display = 'grid';
-                gridDiv.style.gridTemplateColumns = 'repeat(auto-fit, minmax(280px, 1fr))';
-                gridDiv.style.gap = '15px';
-                
-                for (const [label, value] of Object.entries(company.mfinante)) {
-                    let displayValue = value;
-                    if (value !== "" && !isNaN(value)) {
-                        displayValue = Number(value).toLocaleString('ro-RO');
+                // Collect all unique labels across all years (to build column headers)
+                const allLabels = [];
+                for (const yearData of Object.values(company.mfinante)) {
+                    for (const label of Object.keys(yearData)) {
+                        if (!allLabels.includes(label)) allLabels.push(label);
                     }
-                    if (value === "") displayValue = "-";
-                    
-                    gridDiv.innerHTML += `
-                        <div class="detail-item">
-                            <label>${label}</label>
-                            <span style="border-left-color: #28a745;">${displayValue}</span>
-                        </div>
-                    `;
                 }
-                mfinanteContainer.appendChild(gridDiv);
+
+                const years = Object.keys(company.mfinante).sort();
+
+                let tableHtml = `
+                    <div class="mfinante-table-wrapper">
+                        <table class="mfinante-table">
+                            <thead>
+                                <tr>
+                                    <th>An</th>
+                                    ${allLabels.map(l => `<th>${l}</th>`).join('')}
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                for (const year of years) {
+                    const yearData = company.mfinante[year];
+                    tableHtml += `<tr><td class="year-cell">${year}</td>`;
+                    for (const label of allLabels) {
+                        let val = yearData[label];
+                        let display = '-';
+                        if (val !== '' && val !== null && val !== undefined && !isNaN(val)) {
+                            display = Number(val).toLocaleString('ro-RO');
+                        } else if (val !== '' && val !== null && val !== undefined) {
+                            display = val;
+                        }
+                        tableHtml += `<td class="num-cell">${display}</td>`;
+                    }
+                    tableHtml += `</tr>`;
+                }
+
+                tableHtml += `</tbody></table></div>`;
+                mfinanteContainer.innerHTML = tableHtml;
             }
 
             // Hide loading, show content

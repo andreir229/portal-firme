@@ -15,39 +15,41 @@ df_global = pd.read_csv(CSV_PATH, sep="^", encoding="utf-8", low_memory=False, d
 # Convert CUI to string and strip spaces
 df_global['CUI'] = df_global['CUI'].str.strip()
 
-# Load MFinante data
-MFINANTE_CSV_PATH_1 = os.path.join("src", "mfinante", "web_bl_bs_sl_an2024.csv")
-MFINANTE_TXT_PATH_1 = os.path.join("src", "mfinante", "web_bl_bs_sl_an2024.txt")
+# Load MFinante data — list of (year, label_mapping, dataframe) tuples
+# This structure allows adding more years later without code changes.
+MFINANTE_SOURCES = [
+    {
+        "year": "2024",
+        "csv": os.path.join("src", "mfinante", "web_bl_bs_sl_an2024.csv"),
+        "txt": os.path.join("src", "mfinante", "web_bl_bs_sl_an2024.txt"),
+    },
+    {
+        "year": "2024",  # same year, different report type (VS)
+        "csv": os.path.join("src", "mfinante", "web_vs_2024.csv"),
+        "txt": os.path.join("src", "mfinante", "web_vs_2024.txt"),
+    },
+]
 
-MFINANTE_CSV_PATH_2 = os.path.join("src", "mfinante", "web_vs_2024.csv")
-MFINANTE_TXT_PATH_2 = os.path.join("src", "mfinante", "web_vs_2024.txt")
+def load_mfinante_source(source: dict):
+    """Load label mapping + data for a single (csv, txt) pair. Returns (mapping_dict, dataframe)."""
+    try:
+        df_labels = pd.read_csv(source["csv"], sep=';', header=None, names=["label", "id"], encoding="cp1250").fillna("")
+        df_labels['id'] = df_labels['id'].str.strip().str.lower()
+        mapping = dict(zip(df_labels['id'], df_labels['label']))
+    except Exception as e:
+        print(f"Warning: Could not load mfinante labels from {source['csv']}: {e}")
+        mapping = {}
+    try:
+        df = pd.read_csv(source["txt"], sep=",", encoding="cp1250", low_memory=False)
+        df['CUI'] = df['CUI'].astype(str)
+    except Exception as e:
+        print(f"Warning: Could not load mfinante data from {source['txt']}: {e}")
+        df = pd.DataFrame()
+    return mapping, df
 
-# Map variables like 'i1' to their label
-mfinante_mapping = {}
-try:
-    df_mf_labels_1 = pd.read_csv(MFINANTE_CSV_PATH_1, sep=';', header=None, names=["label", "id"], encoding="cp1250").fillna("")
-    df_mf_labels_1['id'] = df_mf_labels_1['id'].str.strip().str.lower()
-    
-    df_mf_labels_2 = pd.read_csv(MFINANTE_CSV_PATH_2, sep=';', header=None, names=["label", "id"], encoding="cp1250").fillna("")
-    df_mf_labels_2['id'] = df_mf_labels_2['id'].str.strip().str.lower()
-    
-    # Combine the mappings (if there are duplicate IDs between the files, the second will overwrite, but they are conceptually distinct groups of metrics anyway, or shared basic ones)
-    df_mf_labels = pd.concat([df_mf_labels_1, df_mf_labels_2], ignore_index=True)
-    mfinante_mapping = dict(zip(df_mf_labels['id'], df_mf_labels['label']))
-except Exception as e:
-    print(f"Warning: Could not load mfinante labels: {e}")
+# Pre-load all sources at startup
+mfinante_loaded = [(s["year"], *load_mfinante_source(s)) for s in MFINANTE_SOURCES]
 
-try:
-    df_mfinante_1 = pd.read_csv(MFINANTE_TXT_PATH_1, sep=",", encoding="cp1250", low_memory=False).fillna("")
-    df_mfinante_1['CUI'] = df_mfinante_1['CUI'].astype(str)
-    
-    df_mfinante_2 = pd.read_csv(MFINANTE_TXT_PATH_2, sep=",", encoding="cp1250", low_memory=False).fillna("")
-    df_mfinante_2['CUI'] = df_mfinante_2['CUI'].astype(str)
-    
-    df_mfinante = pd.concat([df_mfinante_1, df_mfinante_2], ignore_index=True)
-except Exception as e:
-    print(f"Warning: Could not load mfinante TXT: {e}")
-    df_mfinante = pd.DataFrame()
 
 @app.get("/")
 def read_index():
@@ -72,26 +74,26 @@ def get_company(cui: str):
     
     comp_dict = company.iloc[0].to_dict()
     
-    # Attach MFinante financial data if it exists
-    if not df_mfinante.empty:
-        mf_data = df_mfinante[df_mfinante['CUI'] == cui_clean]
-        if not mf_data.empty:
-            mf_row = mf_data.iloc[0].to_dict()
-            mapped_mf = {}
-            for k, v in mf_row.items():
-                k_lower = str(k).strip().lower()
-                
-                # Exclude base IDs since they are already available in company metadata
-                if k_lower in ['cui', 'caen']:
-                    continue
-                    
-                if k_lower in mfinante_mapping:
-                    label = mfinante_mapping[k_lower]
-                    # FastAPI cannot serialize NaN
-                    mapped_mf[label] = "" if pd.isna(v) else v
-                else:
-                    mapped_mf[k] = "" if pd.isna(v) else v
-            comp_dict['mfinante'] = mapped_mf
+    # Build year-keyed financial data: {"2024": {"Label": value, ...}, ...}
+    year_data: dict = {}
+    for year, mapping, df in mfinante_loaded:
+        if df.empty:
+            continue
+        rows = df[df['CUI'] == cui_clean]
+        if rows.empty:
+            continue
+        row = rows.iloc[0].to_dict()
+        year_entry = year_data.setdefault(year, {})
+        for k, v in row.items():
+            k_lower = str(k).strip().lower()
+            if k_lower in ('cui', 'caen'):
+                continue
+            label = mapping.get(k_lower, k)  # fall back to raw key if not in mapping
+            safe_v = "" if (isinstance(v, float) and pd.isna(v)) else v
+            year_entry[label] = safe_v
+
+    if year_data:
+        comp_dict['mfinante'] = year_data
 
     return comp_dict
 
