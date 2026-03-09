@@ -333,7 +333,7 @@
     </main>
 
     <footer>
-        <p>&copy; 2024 Portal Firme - Informații oficiale despre companiile din România</p>
+        <p>&copy; <span id="currentYear"></span> Portal Firme - Informații oficiale despre companiile din România</p>
     </footer>
 
     <script>
@@ -465,6 +465,9 @@
 
         // Load details when page loads
         loadCompanyDetails();
+        
+        // Set current year
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
     </script>
 </body>
 </html>
