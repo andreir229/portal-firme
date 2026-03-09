@@ -67,8 +67,12 @@ def read_index():
 
 @app.get("/search")
 def search(q: str):
-    # Search in the 'DENUMIRE' column
-    results = df_global[df_global['DENUMIRE'].str.contains(q.upper(), na=False)]
+    # Search in both 'DENUMIRE' and 'CUI' columns
+    query = q.upper()
+    results = df_global[
+        df_global['DENUMIRE'].str.contains(query, na=False) | 
+        df_global['CUI'].str.contains(query, na=False)
+    ]
     return results.head(20).to_dict(orient="records")
 
 @app.get("/company/{cui}")
