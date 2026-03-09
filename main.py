@@ -1,10 +1,20 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 import os
 
 app = FastAPI()
+
+# Add CORS middleware to allow external access
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Tell FastAPI where your HTML/CSS files are
 app.mount("/static", StaticFiles(directory="static"), name="static")
