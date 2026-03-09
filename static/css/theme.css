@@ -42,6 +42,14 @@ header {
     padding: 0 20px;
 }
 
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
 .header-content h1 {
     font-size: 2.5rem;
     font-weight: 700;
@@ -55,6 +63,36 @@ header {
     font-size: 0.95rem;
     opacity: 0.9;
     margin: 0;
+}
+
+.header-nav {
+    display: flex;
+    gap: 15px;
+}
+
+.nav-link {
+    color: white !important;
+    text-decoration: none;
+    font-weight: 600;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.nav-link:hover {
+    color: white !important;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.nav-link i {
+    font-size: 1.1rem;
 }
 
 .header-icon {
