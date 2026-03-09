@@ -114,3 +114,12 @@ def get_company(cui: str):
 @app.get("/details")
 def read_details():
     return FileResponse('static/details.html')
+
+@app.get("/readme")
+def get_readme():
+    with open("README.md", "r", encoding="utf-8") as f:
+        return {"content": f.read()}
+
+@app.get("/about")
+def read_about():
+    return FileResponse('static/about.html')
